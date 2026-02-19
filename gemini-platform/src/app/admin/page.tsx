@@ -111,7 +111,7 @@ export default function AdminDashboard() {
               <Terminal className="w-4 h-4" />
             </div>
             <div className="text-xl font-bold text-white truncate" title={config.activeModel}>
-              {config.activeModel || "Gemini 1.5 Pro"}
+              {config.activeModel || "Gemini 3.0 Flash"}
             </div>
             <div className="text-xs text-blue-400">Production ready</div>
           </div>
@@ -162,13 +162,11 @@ export default function AdminDashboard() {
                  <div className="space-y-2">
                     <label className="text-sm text-gray-400">Active Model</label>
                     <select 
-                       value={config.activeModel || "gemini-1.5-pro"}
+                       value={config.activeModel || "gemini-3-flash-preview"}
                        onChange={(e) => updateSettings({ activeModel: e.target.value })}
                        className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-purple-500"
                     >
-                       <option value="gemini-1.5-pro">Gemini 1.5 Pro (Best Quality)</option>
-                       <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fastest)</option>
-                       <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Preview)</option>
+                       <option value="gemini-3-flash-preview">Gemini 3.0 Flash Preview (Only Model)</option>
                     </select>
                  </div>
                  
@@ -201,7 +199,7 @@ export default function AdminDashboard() {
               <div className="space-y-3">
                  <button 
                     onClick={() => updateSettings({ 
-                       activeModel: "gemini-1.5-pro", 
+                       activeModel: "gemini-3-flash-preview", 
                        systemInstruction: "You are a helpful, professional AI assistant focused on accuracy and clarity." 
                     })}
                     className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
@@ -211,13 +209,13 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                        <div className="font-medium text-white">Helpful Assistant</div>
-                       <div className="text-xs text-gray-400">Standard behavior with 1.5 Pro</div>
+                       <div className="text-xs text-gray-400">Standard behavior</div>
                     </div>
                  </button>
 
                  <button 
                     onClick={() => updateSettings({ 
-                       activeModel: "gemini-1.5-flash", 
+                       activeModel: "gemini-3-flash-preview", 
                        systemInstruction: "You are a concise coding expert. Provide only code and brief explanations." 
                     })}
                     className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
@@ -227,13 +225,13 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                        <div className="font-medium text-white">Coding Expert</div>
-                       <div className="text-xs text-gray-400">Fast 1.5 Flash optimized for code</div>
+                       <div className="text-xs text-gray-400">Optimized for code</div>
                     </div>
                  </button>
 
                  <button 
                     onClick={() => updateSettings({ 
-                       activeModel: "gemini-1.5-pro", 
+                       activeModel: "gemini-3-flash-preview", 
                        systemInstruction: "You are a creative writer. Use vivid imagery and metaphors." 
                     })}
                     className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
