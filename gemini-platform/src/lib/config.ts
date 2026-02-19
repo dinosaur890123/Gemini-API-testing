@@ -3,6 +3,8 @@ export const appConfig = {
   rateLimit: 2, // Requests per minute
   systemMessage: "", // Global announcement
   isMaintenanceMode: false,
+  activeModel: "gemini-1.5-pro",
+  systemInstruction: "You are a helpful and intelligent AI assistant.",
 };
 
 export function updateConfig(newConfig: Partial<typeof appConfig>) {

@@ -110,7 +110,9 @@ export default function AdminDashboard() {
               <span className="text-sm font-medium">Active Model</span>
               <Terminal className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-white">Gemini 1.5 Pro</div>
+            <div className="text-xl font-bold text-white truncate" title={config.activeModel}>
+              {config.activeModel || "Gemini 1.5 Pro"}
+            </div>
             <div className="text-xs text-blue-400">Production ready</div>
           </div>
         </div>
@@ -146,6 +148,106 @@ export default function AdminDashboard() {
            <p className="text-xs text-gray-500 mt-2">
              This message will appear as a banner on the chat interface for all active users.
            </p>
+        </div>
+
+        {/* AI Configuration */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           {/* Model Selection */}
+           <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl space-y-4">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                 <Terminal className="w-5 h-5 text-purple-500" />
+                 Model Configuration
+              </h3>
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-sm text-gray-400">Active Model</label>
+                    <select 
+                       value={config.activeModel || "gemini-1.5-pro"}
+                       onChange={(e) => updateSettings({ activeModel: e.target.value })}
+                       className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    >
+                       <option value="gemini-1.5-pro">Gemini 1.5 Pro (Best Quality)</option>
+                       <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fastest)</option>
+                       <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Preview)</option>
+                    </select>
+                 </div>
+                 
+                 <div className="space-y-2">
+                    <label className="text-sm text-gray-400">System Instruction (Persona)</label>
+                    <textarea 
+                       className="w-full h-32 bg-black border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 resize-none font-mono"
+                       placeholder="You are a helpful assistant..."
+                       value={config.systemInstruction || ""}
+                       onChange={(e) => setConfig({ ...config, systemInstruction: e.target.value })}
+                    />
+                    <div className="flex justify-end">
+                       <button 
+                          onClick={() => updateSettings({ systemInstruction: config.systemInstruction })}
+                          className="px-4 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded transition-colors"
+                       >
+                          Update Persona
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           {/* Quick Actions / Presets */}
+            <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl space-y-4">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                 <ShieldCheck className="w-5 h-5 text-blue-500" />
+                 Quick Presets
+              </h3>
+              <div className="space-y-3">
+                 <button 
+                    onClick={() => updateSettings({ 
+                       activeModel: "gemini-1.5-pro", 
+                       systemInstruction: "You are a helpful, professional AI assistant focused on accuracy and clarity." 
+                    })}
+                    className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
+                 >
+                    <div className="p-2 bg-blue-900/30 rounded group-hover:bg-blue-900/50 text-blue-400">
+                       <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                       <div className="font-medium text-white">Helpful Assistant</div>
+                       <div className="text-xs text-gray-400">Standard behavior with 1.5 Pro</div>
+                    </div>
+                 </button>
+
+                 <button 
+                    onClick={() => updateSettings({ 
+                       activeModel: "gemini-1.5-flash", 
+                       systemInstruction: "You are a concise coding expert. Provide only code and brief explanations." 
+                    })}
+                    className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
+                 >
+                    <div className="p-2 bg-green-900/30 rounded group-hover:bg-green-900/50 text-green-400">
+                       <Terminal className="w-4 h-4" />
+                    </div>
+                    <div>
+                       <div className="font-medium text-white">Coding Expert</div>
+                       <div className="text-xs text-gray-400">Fast 1.5 Flash optimized for code</div>
+                    </div>
+                 </button>
+
+                 <button 
+                    onClick={() => updateSettings({ 
+                       activeModel: "gemini-1.5-pro", 
+                       systemInstruction: "You are a creative writer. Use vivid imagery and metaphors." 
+                    })}
+                    className="w-full p-3 bg-gray-800 hover:bg-gray-700 rounded text-left transition-colors flex items-center gap-3 group"
+                 >
+                    <div className="p-2 bg-purple-900/30 rounded group-hover:bg-purple-900/50 text-purple-400">
+                       <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                       <div className="font-medium text-white">Creative Writer</div>
+                       <div className="text-xs text-gray-400">Expressive persona</div>
+                    </div>
+                 </button>
+              </div>
+           </div>
         </div>
 
         {/* Action Cards */}

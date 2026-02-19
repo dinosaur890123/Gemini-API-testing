@@ -43,8 +43,11 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-1.5-pro";
-    const model = genAI.getGenerativeModel({ model: modelName });
+    const modelName = config.activeModel || process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-1.5-pro";
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      systemInstruction: config.systemInstruction
+    });
 
     const chat = model.startChat({
       history: history || [],

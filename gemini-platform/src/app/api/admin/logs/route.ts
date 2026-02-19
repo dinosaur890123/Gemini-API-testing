@@ -8,4 +8,3 @@ export async function GET(request: NextRequest) {
   const logs = await getLogs();
   return NextResponse.json(logs);
 }
-

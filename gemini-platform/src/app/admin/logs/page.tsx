@@ -11,7 +11,7 @@ export default function LogsPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/logs");
+      const res = await fetch("/api/admin/logs");
       if (res.ok) {
         const data = await res.json();
         setLogs(data);
