@@ -22,7 +22,30 @@ export async function GET() {
       );
     `);
 
-    return NextResponse.json({ status: "success", message: "Database table 'logs' created successfully." });
+    // Create users table
+    await query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        name TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Create chats table
+    await query(`
+      CREATE TABLE IF NOT EXISTS chats (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        messages JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    return NextResponse.json({ status: "success", message: "Database tables created successfully." });
   } catch (error: any) {
     return NextResponse.json({ status: "error", message: error.message }, { status: 500 });
   }
