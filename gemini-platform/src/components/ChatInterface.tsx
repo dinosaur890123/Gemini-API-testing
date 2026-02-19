@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User as UserIcon, Loader2, Info, Lock, LogOut, Plus, MessageSquare } from "lucide-react";
+import { Send, Bot, User as UserIcon, Loader2, Info, Lock, LogOut, Plus, MessageSquare, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -402,6 +402,7 @@ export default function ChatInterface() {
             </button>
             </div>
         </form>
+      </div>
     </div>
   );
 }
