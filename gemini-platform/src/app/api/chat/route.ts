@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import rateLimit from "@/lib/rate-limit";
+import { addLog } from "@/lib/logger";
 
 const limiter = rateLimit({
   interval: 60 * 1000, // 60 seconds
@@ -9,11 +10,16 @@ const limiter = rateLimit({
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
+
+    // Log the user's input to the server console and memory cache
+    console.log(`[${new Date().toISOString()}] User Input:`, message);
+    addLog(message); // Persist to transient store for UI
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     try {
-      // In a real app, use the user's IP or ID
-      await limiter.check(8, "CACHE_TOKEN"); 
+      // Rate Limit: 4 requests per minute
+      await limiter.check(4, "CACHE_TOKEN"); 
     } catch {
       return new Response("Rate Limit Exceeded", { status: 429 });
     }
