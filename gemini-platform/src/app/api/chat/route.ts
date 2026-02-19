@@ -18,8 +18,8 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     try {
-      // Rate Limit: 4 requests per minute
-      await limiter.check(4, "CACHE_TOKEN"); 
+      // Rate Limit: 2 requests per minute
+      await limiter.check(2, "CACHE_TOKEN"); 
     } catch {
       return new Response("Rate Limit Exceeded", { status: 429 });
     }
