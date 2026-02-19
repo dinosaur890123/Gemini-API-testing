@@ -61,3 +61,19 @@ When deploying to Vercel, you need to set your environment variables in the proj
 
 These variables are **not** committed to Git for security reasons. Vercel securely injects them into your application at build and runtime.
 
+
+## Database Setup (Vercel Postgres)
+
+1.  **Create Database**:
+    - Go to your Vercel Dashboard -> Storage -> Create Database -> Postgres.
+    - Connect it to your project.
+    - This will automatically add environment variables like `POSTGRES_URL`.
+
+2.  **Initialize Table**:
+    - Once deployed, visit your app URL:
+      `https://your-app.vercel.app/api/setup-db`
+    - It will create the `logs` table for you.
+
+## Admin Logs
+- Access logs at `/admin/logs`.
+

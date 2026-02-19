@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
     // Log the user's input to the server console and memory cache
     console.log(`[${new Date().toISOString()}] User Input:`, message);
-    addLog(message); // Persist to transient store for UI
+    await addLog(message); // Persist to transient store for UI
 
     const apiKey = process.env.GEMINI_API_KEY;
 

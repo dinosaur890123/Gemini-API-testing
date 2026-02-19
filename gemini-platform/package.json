@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@types/pg": "^8.16.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.2",
     "lru-cache": "^11.2.6",
     "lucide-react": "^0.574.0",
     "next": "16.1.6",
+    "pg": "^8.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.5.0"
