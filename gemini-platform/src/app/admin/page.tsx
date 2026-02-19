@@ -12,7 +12,9 @@ import {
   MessageSquare,
   Trash2,
   RefreshCw,
-  LayoutDashboard
+  LayoutDashboard,
+  Eye,
+  X
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -32,6 +34,7 @@ interface Chat {
   user_name: string;
   created_at: string;
   updated_at: string;
+  messages?: any[];
 }
 
 export default function AdminDashboard() {
@@ -42,6 +45,7 @@ export default function AdminDashboard() {
   // Data State
   const [users, setUsers] = useState<User[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/config").then(res => res.json()).then(setConfig);
@@ -61,7 +65,23 @@ export default function AdminDashboard() {
     const res = await fetch("/api/admin/chats");
     if (res.ok) setChats(await res.json());
   };
+viewChat = async (id: number) => {
+    const res = await fetch(`/api/admin/chats?id=${id}`);
+    if (res.ok) {
+        const chatData = await res.json();
+        // Parse messages if it's a string
+        if (typeof chatData.messages === 'string') {
+            try {
+                chatData.messages = JSON.parse(chatData.messages);
+            } catch (e) {
+                chatData.messages = [];
+            }
+        }
+        setSelectedChat(chatData);
+    }
+  };
 
+  const 
   const deleteUser = async (id: number) => {
     if (!confirm("Are you sure? This will delete the user and all their chats.")) return;
     await fetch("/api/admin/users", {
@@ -356,10 +376,18 @@ export default function AdminDashboard() {
                       <thead className="bg-black text-gray-400 font-medium">
                          <tr>
                             <th className="p-4">ID</th>
-                            <th className="p-4">Title</th>
-                            <th className="p-4">User</th>
-                            <th className="p-4">Last Updated</th>
-                            <th className="p-4 text-right">Actions</th>
+                            <th className="p-4">Title</th> space-x-2">
+                                  <button 
+                                    onClick={() => viewChat(chat.id)}
+                                    className="p-2 hover:bg-blue-900/30 rounded text-gray-500 hover:text-blue-500 transition-colors"
+                                    title="View Chat"
+                                  >
+                                     <Eye className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => deleteChat(chat.id)}
+                                    className="p-2 hover:bg-red-900/30 rounded text-gray-500 hover:text-red-500 transition-colors"
+                                    title="Delete Chat
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-800">
@@ -370,6 +398,58 @@ export default function AdminDashboard() {
                                <td className="p-4 text-gray-400">
                                   <div className="text-white">{chat.user_name}</div>
                                   <div className="text-xs text-gray-500">{chat.user_email}</div>
+
+        {/* Chat Viewer Modal */}
+        {selectedChat && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
+              <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950 rounded-t-xl">
+                 <div>
+                    <h3 className="text-lg font-bold text-white">{selectedChat.title || "Untitled Chat"}</h3>
+                    <p className="text-sm text-gray-400">User: {selectedChat.user_name} ({selectedChat.user_email})</p>
+                 </div>
+                 <button 
+                   onClick={() => setSelectedChat(null)}
+                   className="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-white"
+                 >
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/50">
+                 {selectedChat.messages && selectedChat.messages.length > 0 ? (
+                    selectedChat.messages.map((msg: any, idx: number) => (
+                       <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-4 rounded-xl ${
+                             msg.role === 'user' 
+                               ? 'bg-blue-600/20 text-blue-100 border border-blue-600/30 rounded-br-none' 
+                               : 'bg-gray-800 text-gray-300 border border-gray-700 rounded-bl-none'
+                          }`}>
+                             <div className="text-xs font-bold mb-1 opacity-50 uppercase">{msg.role}</div>
+                             <div className="whitespace-pre-wrap text-sm">{msg.parts ? msg.parts[0]?.text : (msg.content || JSON.stringify(msg))}</div>
+                          </div>
+                       </div>
+                    ))
+                 ) : (
+                    <div className="text-center py-12 text-gray-500">
+                       <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                       <p>No messages found in this chat.</p>
+                    </div>
+                 )}
+              </div>
+
+               <div className="p-4 border-t border-gray-800 bg-gray-950 rounded-b-xl flex justify-between items-center">
+                  <span className="text-xs text-gray-500">ID: {selectedChat.id} • Created: {new Date(selectedChat.created_at).toLocaleString()}</span>
+                  <button 
+                     onClick={() => setSelectedChat(null)}
+                     className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded transition-colors"
+                  >
+                     Close Viewer
+                  </button>
+               </div>
+            </div>
+          </div>
+        )}
                                </td>
                                <td className="p-4 text-gray-500">{new Date(chat.updated_at).toLocaleString()}</td>
                                <td className="p-4 text-right">

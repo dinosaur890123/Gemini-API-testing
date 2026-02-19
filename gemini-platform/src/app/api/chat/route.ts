@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 import rateLimit from "@/lib/rate-limit";
 import { addLog } from "@/lib/logger";
 import { getConfig } from "@/lib/config";
@@ -11,6 +13,9 @@ const limiter = rateLimit({
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email || "Unknown User";
+
     const config = getConfig();
 
     // Maintenance Mode Check
@@ -25,10 +30,10 @@ export async function POST(req: Request) {
 
     const { message, history } = await req.json();
 
-    // Log input
-    console.log(`[${new Date().toISOString()}] User Input:`, message);
-    await addLog(message); 
-
+    // Log input with user info
+    const logMessage = `[User: ${userEmail}] ${message}`;
+    console.log(`[${new Date().toISOString()}] ${logMessage}`);
+    await addLog(logMessage); 
     const apiKey = process.env.GEMINI_API_KEY;
 
     try {
