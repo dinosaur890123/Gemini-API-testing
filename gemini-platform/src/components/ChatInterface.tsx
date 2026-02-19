@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, Info, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -18,6 +18,29 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Dynamic Config Features
+  const [systemMessage, setSystemMessage] = useState<string | null>(null);
+  const [isMaintenance, setMaintenance] = useState(false);
+
+  useEffect(() => {
+    // Poll for system messages every 15s
+    const checkConfig = async () => {
+      try {
+        const res = await fetch("/api/admin/config");
+        if (res.ok) {
+          const config = await res.json();
+          setSystemMessage(config.systemMessage || null);
+          setMaintenance(config.isMaintenanceMode || false);
+        }
+      } catch (err) {
+        // Silently fail
+      }
+    };
+    checkConfig();
+    const interval = setInterval(checkConfig, 15000);
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -97,6 +120,25 @@ export default function ChatInterface() {
           Model: {process.env.NEXT_PUBLIC_GEMINI_MODEL || "Pro-Latest"}
         </div>
       </header>
+      
+      {/* System Announcement Banner */}
+      {systemMessage && (
+        <div className="bg-blue-900/40 border-b border-blue-500/30 p-2 text-center text-sm text-blue-200 flex items-center justify-center gap-2">
+          <Info className="w-4 h-4" />
+          {systemMessage}
+        </div>
+      )}
+
+      {/* Maintenance Mode Overlay */}
+      {isMaintenance && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-center p-8">
+          <Lock className="w-16 h-16 text-yellow-500 mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">System Maintenance</h2>
+          <p className="text-gray-400 max-w-md">
+            The platform is currently undergoing scheduled maintenance. Please check back later.
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {messages.length === 0 && (

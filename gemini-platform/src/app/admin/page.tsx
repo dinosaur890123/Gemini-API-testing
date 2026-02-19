@@ -1,17 +1,40 @@
 // src/app/admin/page.tsx
 "use client";
 
-import Link from "next/link";
 import { 
   ShieldCheck, 
   Terminal, 
   Database, 
   LogOut,
   Activity,
-  Users
+  Users,
+  Settings,
+  MessageSquare,
+  AlertTriangle
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { getConfig } from "@/lib/config";
 
 export default function AdminDashboard() {
+  const [config, setConfig] = useState<any>({ rateLimit: 2, systemMessage: "", isMaintenanceMode: false });
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    fetch("/api/admin/config").then(res => res.json()).then(setConfig);
+  }, []);
+
+  const updateSettings = async (updates: any) => {
+    setLoading(true);
+    await fetch("/api/admin/config", {
+      method: "POST",
+      body: JSON.stringify(updates)
+    });
+    const newConfig = await fetch("/api/admin/config").then(res => res.json());
+    setConfig(newConfig);
+    setLoading(false);
+  };
+
   const logout = () => {
     // In a real app, call an API to clear the cookie
     document.cookie = "admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -42,32 +65,87 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-xl space-y-2">
+          <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-xl space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between text-gray-400">
               <span className="text-sm font-medium">Rate Limit</span>
               <Activity className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-white">2 req/min</div>
-            <div className="text-xs text-green-400">Strict mode active</div>
+            <div className="flex items-center gap-4">
+               <div className="text-2xl font-bold text-white">{config.rateLimit} req/min</div>
+               <div className="flex gap-1">
+                 <button 
+                    onClick={() => updateSettings({ rateLimit: Math.max(0, config.rateLimit - 1) })}
+                    className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700 text-xs text-white"
+                 >-</button>
+                 <button 
+                    onClick={() => updateSettings({ rateLimit: config.rateLimit + 1 })}
+                    className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700 text-xs text-white"
+                 >+</button>
+               </div>
+            </div>
+            <div className="text-xs text-green-400">Dynamic scaling active</div>
+          </div>
+
+          <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-xl space-y-2 relative">
+             {config.isMaintenanceMode && (
+               <div className="absolute inset-0 bg-red-900/20 pointer-events-none" />
+             )}
+            <div className="flex items-center justify-between text-gray-400">
+              <span className="text-sm font-medium">System Status</span>
+              <Settings className="w-4 h-4" />
+            </div>
+            <div className={`text-2xl font-bold ${config.isMaintenanceMode ? "text-red-500" : "text-green-500"}`}>
+              {config.isMaintenanceMode ? "Maintenance" : "Online"}
+            </div>
+            <button 
+              onClick={() => updateSettings({ isMaintenanceMode: !config.isMaintenanceMode })}
+              className={`text-xs px-2 py-1 rounded transition-colors ${config.isMaintenanceMode ? "bg-green-900 text-green-300 hover:bg-green-800" : "bg-red-900 text-red-300 hover:bg-red-800"}`}
+            >
+              {config.isMaintenanceMode ? "Go Online" : "Start Maintenance"}
+            </button>
           </div>
 
           <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-xl space-y-2">
             <div className="flex items-center justify-between text-gray-400">
-              <span className="text-sm font-medium">Model</span>
+              <span className="text-sm font-medium">Active Model</span>
               <Terminal className="w-4 h-4" />
             </div>
             <div className="text-2xl font-bold text-white">Gemini 1.5 Pro</div>
             <div className="text-xs text-blue-400">Production ready</div>
           </div>
+        </div>
 
-          <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-gray-400">
-              <span className="text-sm font-medium">Status</span>
-              <Users className="w-4 h-4" />
-            </div>
-            <div className="text-2xl font-bold text-green-400">Online</div>
-            <div className="text-xs text-gray-500">System operational</div>
-          </div>
+        {/* Global Announcement */}
+        <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl">
+           <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="w-5 h-5 text-yellow-500" />
+              <h3 className="text-lg font-semibold text-white">Global Announcement</h3>
+           </div>
+           <div className="flex gap-4">
+             <input 
+               type="text" 
+               placeholder="Enter a message to show all users..."
+               className="flex-1 bg-black border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+               value={config.systemMessage || ""}
+               onChange={(e) => setConfig({ ...config, systemMessage: e.target.value })}
+             />
+             <button 
+               onClick={() => updateSettings({ systemMessage: config.systemMessage })}
+               disabled={loading}
+               className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+             >
+               Broadcast
+             </button>
+             <button 
+               onClick={() => updateSettings({ systemMessage: "" })}
+               className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors"
+             >
+               Clear
+             </button>
+           </div>
+           <p className="text-xs text-gray-500 mt-2">
+             This message will appear as a banner on the chat interface for all active users.
+           </p>
         </div>
 
         {/* Action Cards */}

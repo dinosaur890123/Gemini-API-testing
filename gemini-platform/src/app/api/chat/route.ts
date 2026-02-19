@@ -1,25 +1,39 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import rateLimit from "@/lib/rate-limit";
 import { addLog } from "@/lib/logger";
+import { getConfig } from "@/lib/config";
 
+// Use a high default, because we enforce dynamically below
 const limiter = rateLimit({
-  interval: 60 * 1000, // 60 seconds
-  uniqueTokenPerInterval: 500, // Max 500 users per second
+  interval: 60 * 1000, 
+  uniqueTokenPerInterval: 500, 
 });
 
 export async function POST(req: Request) {
   try {
+    const config = getConfig();
+
+    // Maintenance Mode Check
+    if (config.isMaintenanceMode) {
+      return new Response(
+        JSON.stringify({ 
+          error: "System is currently in maintenance mode. Please try again later." 
+        }), 
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const { message, history } = await req.json();
 
-    // Log the user's input to the server console and memory cache
+    // Log input
     console.log(`[${new Date().toISOString()}] User Input:`, message);
-    await addLog(message); // Persist to transient store for UI
+    await addLog(message); 
 
     const apiKey = process.env.GEMINI_API_KEY;
 
     try {
-      // Rate Limit: 2 requests per minute
-      await limiter.check(2, "CACHE_TOKEN"); 
+      // Dynamic Rate Limit
+      await limiter.check(config.rateLimit, "CACHE_TOKEN"); 
     } catch {
       return new Response("Rate Limit Exceeded", { status: 429 });
     }
