@@ -18,9 +18,29 @@ export async function GET() {
       CREATE TABLE IF NOT EXISTS logs (
         id SERIAL PRIMARY KEY,
         timestamp TIMESTAMPTZ DEFAULT NOW(),
-        message TEXT NOT NULL
+        message TEXT NOT NULL,
+        event_type TEXT,
+        user_id TEXT,
+        user_email TEXT,
+        ip TEXT,
+        user_agent TEXT,
+        path TEXT,
+        method TEXT,
+        chat_id TEXT,
+        metadata JSONB
       );
     `);
+
+    // Upgrade existing logs table (safe no-ops if already present)
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS event_type TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS user_id TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS user_email TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS ip TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS user_agent TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS path TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS method TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS chat_id TEXT;`);
+    await query(`ALTER TABLE logs ADD COLUMN IF NOT EXISTS metadata JSONB;`);
 
     // Create users table
     await query(`
@@ -46,7 +66,10 @@ export async function GET() {
     `);
 
     return NextResponse.json({ status: "success", message: "Database tables created successfully." });
-  } catch (error: any) {
-    return NextResponse.json({ status: "error", message: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { status: "error", message: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }

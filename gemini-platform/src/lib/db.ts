@@ -11,7 +11,7 @@ if (process.env.POSTGRES_URL) {
   });
 }
 
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: unknown[]) {
   if (!pool) {
     console.warn("Database not connected (POSTGRES_URL missing). Using in-memory fallback.");
     return null;

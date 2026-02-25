@@ -12,9 +12,13 @@ export async function GET(req: Request) {
   }
 
   try {
+    const userId = (session.user as unknown as { id?: string | number }).id;
+    if (userId === undefined || userId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const result = await query(
       "SELECT id, title, created_at, updated_at FROM chats WHERE user_id = $1 ORDER BY updated_at DESC",
-      [(session.user as any).id]
+      [userId]
     );
     return NextResponse.json(result?.rows || []);
   } catch (error) {
@@ -33,9 +37,14 @@ export async function POST(req: Request) {
   try {
     const { title, messages } = await req.json();
 
+    const userId = (session.user as unknown as { id?: string | number }).id;
+    if (userId === undefined || userId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const result = await query(
       "INSERT INTO chats (user_id, title, messages) VALUES ($1, $2, $3) RETURNING id, title, created_at",
-      [(session.user as any).id, title || "New Chat", JSON.stringify(messages || [])]
+      [userId, title || "New Chat", JSON.stringify(messages || [])]
     );
 
     return NextResponse.json(result?.rows[0]);

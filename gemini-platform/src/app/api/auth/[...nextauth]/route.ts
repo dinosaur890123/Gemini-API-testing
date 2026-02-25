@@ -3,7 +3,6 @@ import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { query } from "@/lib/db";
 import bcrypt from "bcrypt";
-import clsx from 'clsx'; // ensure module is valid, though not strictly needed for auth logic, keeping helper imports minimal
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -45,13 +44,13 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = (user as { id?: string | number }).id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
+        (session.user as { id?: string | number }).id = token.id as string | number;
       }
       return session;
     }

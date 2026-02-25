@@ -34,12 +34,28 @@ interface Chat {
   user_name: string;
   created_at: string;
   updated_at: string;
-  messages?: any[];
+   messages?: unknown[] | string;
 }
+
+type AdminConfig = {
+   rateLimit: number;
+   systemMessage?: string;
+   isMaintenanceMode?: boolean;
+   activeModel?: string;
+   systemInstruction?: string;
+   [key: string]: unknown;
+};
+
+type StoredChatMessage = {
+   role?: "user" | "model" | string;
+   parts?: Array<{ text?: string }>;
+   content?: string;
+   [key: string]: unknown;
+};
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'chats'>('dashboard');
-  const [config, setConfig] = useState<any>({ rateLimit: 2, systemMessage: "", isMaintenanceMode: false });
+   const [config, setConfig] = useState<AdminConfig>({ rateLimit: 2, systemMessage: "", isMaintenanceMode: false });
   const [loading, setLoading] = useState(false);
   
   // Data State
@@ -47,25 +63,33 @@ export default function AdminDashboard() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
 
+   async function fetchUsers() {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) setUsers(await res.json());
+   }
+
+   async function fetchChats() {
+      const res = await fetch("/api/admin/chats");
+      if (res.ok) setChats(await res.json());
+   }
+
   useEffect(() => {
-    fetch("/api/admin/config").then(res => res.json()).then(setConfig);
+      fetch("/api/admin/config")
+         .then(res => res.json())
+         .then((value) => setConfig(value as AdminConfig));
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'users') fetchUsers();
-    if (activeTab === 'chats') fetchChats();
-  }, [activeTab]);
+   const openDashboardTab = () => setActiveTab('dashboard');
+   const openUsersTab = () => {
+      setActiveTab('users');
+      void fetchUsers();
+   };
+   const openChatsTab = () => {
+      setActiveTab('chats');
+      void fetchChats();
+   };
 
-  const fetchUsers = async () => {
-    const res = await fetch("/api/admin/users");
-    if (res.ok) setUsers(await res.json());
-  };
-
-  const fetchChats = async () => {
-    const res = await fetch("/api/admin/chats");
-    if (res.ok) setChats(await res.json());
-  };
-viewChat = async (id: number) => {
+   const viewChat = async (id: number) => {
     const res = await fetch(`/api/admin/chats?id=${id}`);
     if (res.ok) {
         const chatData = await res.json();
@@ -73,7 +97,7 @@ viewChat = async (id: number) => {
         if (typeof chatData.messages === 'string') {
             try {
                 chatData.messages = JSON.parse(chatData.messages);
-            } catch (e) {
+            } catch {
                 chatData.messages = [];
             }
         }
@@ -81,7 +105,6 @@ viewChat = async (id: number) => {
     }
   };
 
-  const 
   const deleteUser = async (id: number) => {
     if (!confirm("Are you sure? This will delete the user and all their chats.")) return;
     await fetch("/api/admin/users", {
@@ -102,14 +125,14 @@ viewChat = async (id: number) => {
     fetchChats();
   };
 
-  const updateSettings = async (updates: any) => {
+   const updateSettings = async (updates: Partial<AdminConfig>) => {
     setLoading(true);
     await fetch("/api/admin/config", {
       method: "POST",
       body: JSON.stringify(updates)
     });
     const newConfig = await fetch("/api/admin/config").then(res => res.json());
-    setConfig(newConfig);
+      setConfig(newConfig as AdminConfig);
     setLoading(false);
   };
 
@@ -132,21 +155,21 @@ viewChat = async (id: number) => {
         
         <nav className="flex items-center gap-1 bg-gray-900 p-1 rounded-lg">
            <button 
-             onClick={() => setActiveTab('dashboard')}
+                   onClick={openDashboardTab}
              className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-gray-800 text-white shadow' : 'text-gray-400 hover:text-white'}`}
            >
              <LayoutDashboard className="w-4 h-4" />
              Dashboard
            </button>
            <button 
-             onClick={() => setActiveTab('users')}
+                   onClick={openUsersTab}
              className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-gray-800 text-white shadow' : 'text-gray-400 hover:text-white'}`}
            >
              <Users className="w-4 h-4" />
              Users
            </button>
            <button 
-             onClick={() => setActiveTab('chats')}
+                   onClick={openChatsTab}
              className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${activeTab === 'chats' ? 'bg-gray-800 text-white shadow' : 'text-gray-400 hover:text-white'}`}
            >
              <MessageSquare className="w-4 h-4" />
@@ -376,18 +399,10 @@ viewChat = async (id: number) => {
                       <thead className="bg-black text-gray-400 font-medium">
                          <tr>
                             <th className="p-4">ID</th>
-                            <th className="p-4">Title</th> space-x-2">
-                                  <button 
-                                    onClick={() => viewChat(chat.id)}
-                                    className="p-2 hover:bg-blue-900/30 rounded text-gray-500 hover:text-blue-500 transition-colors"
-                                    title="View Chat"
-                                  >
-                                     <Eye className="w-4 h-4" />
-                                  </button>
-                                  <button 
-                                    onClick={() => deleteChat(chat.id)}
-                                    className="p-2 hover:bg-red-900/30 rounded text-gray-500 hover:text-red-500 transition-colors"
-                                    title="Delete Chat
+                            <th className="p-4">Title</th>
+                            <th className="p-4">User</th>
+                            <th className="p-4">Updated</th>
+                            <th className="p-4 text-right">Actions</th>
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-800">
@@ -398,6 +413,38 @@ viewChat = async (id: number) => {
                                <td className="p-4 text-gray-400">
                                   <div className="text-white">{chat.user_name}</div>
                                   <div className="text-xs text-gray-500">{chat.user_email}</div>
+                               </td>
+                               <td className="p-4 text-gray-500">{new Date(chat.updated_at).toLocaleString()}</td>
+                               <td className="p-4 text-right">
+                                  <div className="inline-flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={() => viewChat(chat.id)}
+                                      className="p-2 hover:bg-blue-900/30 rounded text-gray-500 hover:text-blue-500 transition-colors"
+                                      title="View Chat"
+                                    >
+                                       <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                      onClick={() => deleteChat(chat.id)}
+                                      className="p-2 hover:bg-red-900/30 rounded text-gray-500 hover:text-red-500 transition-colors"
+                                      title="Delete Chat"
+                                    >
+                                       <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                               </td>
+                            </tr>
+                         ))}
+                         {chats.length === 0 && (
+                            <tr>
+                               <td colSpan={5} className="p-8 text-center text-gray-500">No recent chats.</td>
+                            </tr>
+                         )}
+                      </tbody>
+                   </table>
+                </div>
+             </div>
+          )}
 
         {/* Chat Viewer Modal */}
         {selectedChat && (
@@ -417,8 +464,8 @@ viewChat = async (id: number) => {
               </div>
               
               <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/50">
-                 {selectedChat.messages && selectedChat.messages.length > 0 ? (
-                    selectedChat.messages.map((msg: any, idx: number) => (
+                 {Array.isArray(selectedChat.messages) && selectedChat.messages.length > 0 ? (
+                    (selectedChat.messages as StoredChatMessage[]).map((msg, idx: number) => (
                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] p-4 rounded-xl ${
                              msg.role === 'user' 
@@ -450,28 +497,6 @@ viewChat = async (id: number) => {
             </div>
           </div>
         )}
-                               </td>
-                               <td className="p-4 text-gray-500">{new Date(chat.updated_at).toLocaleString()}</td>
-                               <td className="p-4 text-right">
-                                  <button 
-                                    onClick={() => deleteChat(chat.id)}
-                                    className="p-2 hover:bg-red-900/30 rounded text-gray-500 hover:text-red-500 transition-colors"
-                                  >
-                                     <Trash2 className="w-4 h-4" />
-                                  </button>
-                               </td>
-                            </tr>
-                         ))}
-                         {chats.length === 0 && (
-                            <tr>
-                               <td colSpan={5} className="p-8 text-center text-gray-500">No recent chats.</td>
-                            </tr>
-                         )}
-                      </tbody>
-                   </table>
-                </div>
-             </div>
-          )}
 
         </div>
       </main>

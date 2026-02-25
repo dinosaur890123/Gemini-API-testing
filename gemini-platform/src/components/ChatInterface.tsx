@@ -9,6 +9,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import type { Components } from "react-markdown";
 
 interface Message {
   role: "user" | "model";
@@ -203,6 +204,25 @@ export default function ChatInterface() {
     }
   };
 
+  const markdownComponents: Components = {
+    code({ className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      return match ? (
+        <SyntaxHighlighter
+          style={vscDarkPlus as unknown as Record<string, React.CSSProperties>}
+          language={match[1]}
+          PreTag="div"
+        >
+          {String(children).replace(/\n$/, "")}
+        </SyntaxHighlighter>
+      ) : (
+        <code className={cn("bg-black/20 rounded px-1", className)} {...props}>
+          {children}
+        </code>
+      );
+    },
+  };
+
   return (
     <div className="flex h-[calc(100vh-2rem)] max-w-6xl mx-auto bg-white/5 rounded-xl border border-white/10 shadow-xl overflow-hidden backdrop-blur-sm">
       
@@ -340,25 +360,7 @@ export default function ChatInterface() {
                 >
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
-                    components={{
-                    code({node, inline, className, children, ...props}: any) {
-                        const match = /language-(\w+)/.exec(className || '')
-                        return !inline && match ? (
-                        <SyntaxHighlighter
-                            style={vscDarkPlus}
-                            language={match[1]}
-                            PreTag="div"
-                            {...props}
-                        >
-                            {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                        ) : (
-                        <code className={cn("bg-black/20 rounded px-1", className)} {...props}>
-                            {children}
-                        </code>
-                        )
-                    }
-                    }}
+                  components={markdownComponents}
                 >
                     {msg.parts[0].text}
                 </ReactMarkdown>

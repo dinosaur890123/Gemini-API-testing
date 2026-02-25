@@ -10,9 +10,13 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
   if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const userId = (session.user as unknown as { id?: string | number }).id;
+    if (userId === undefined || userId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const result = await query(
       "SELECT * FROM chats WHERE id = $1 AND user_id = $2",
-      [params.id, (session.user as any).id]
+      [params.id, userId]
     );
 
     if (!result?.rows.length) {
@@ -32,11 +36,16 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
 
   try {
     const { messages, title } = await req.json();
+
+    const userId = (session.user as unknown as { id?: string | number }).id;
+    if (userId === undefined || userId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     
     // Build update query dynamically if needed, but for now simple
     const result = await query(
       "UPDATE chats SET messages = $1, title = COALESCE($2, title), updated_at = NOW() WHERE id = $3 AND user_id = $4 RETURNING *",
-      [JSON.stringify(messages), title, params.id, (session.user as any).id]
+      [JSON.stringify(messages), title, params.id, userId]
     );
 
     if (!result?.rows.length) {
@@ -55,7 +64,12 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
   if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    await query("DELETE FROM chats WHERE id = $1 AND user_id = $2", [params.id, (session.user as any).id]);
+    const userId = (session.user as unknown as { id?: string | number }).id;
+    if (userId === undefined || userId === null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await query("DELETE FROM chats WHERE id = $1 AND user_id = $2", [params.id, userId]);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
